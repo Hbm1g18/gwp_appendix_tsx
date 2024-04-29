@@ -1,0 +1,19 @@
+{
+  "name": "Attachment-Selector",
+  "label": "GWP-Appendix-Widget",
+  "type": "widget",
+  "version": "1.0.0",
+  "exbVersion": "1.0.0",
+  "author": "Harry Bonshor-Mayes",
+  "description": "This widget is used to allow for attachment integration.",
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 400,
+    "height": 400
+  }
+}
