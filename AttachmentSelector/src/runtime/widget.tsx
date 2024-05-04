@@ -1,5 +1,6 @@
 import { React, IMDataSourceInfo, DataSource, DataSourceManager, DataSourceStatus, FeatureLayerQueryParams, AllWidgetProps, DataSourceComponent } from 'jimu-core';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
+import './styles.css'; 
 
 const { useState, useEffect, useRef } = React;
 
@@ -24,7 +25,6 @@ export default function Widget(props: AllWidgetProps<{}>) {
       props.useDataSources.length === 1 &&
       props.useDataSources[0].fields &&
       props.useDataSources[0].fields.length === 1) {
-      console.log(props)
       return true;
     }
     return false;
@@ -63,7 +63,7 @@ export default function Widget(props: AllWidgetProps<{}>) {
   
     const objectIdFieldName = 'OBJECTID';
   
-    const attachmentsDictionary: { [objectId: string]: { count: number; additionalField: string } } = {};
+    const attachmentsDictionary: { [objectId: string]: { count: number; additionalField: string; urls: string[] } } = {};
   
     const records = ds.getRecords();
   
@@ -77,8 +77,6 @@ export default function Widget(props: AllWidgetProps<{}>) {
           url: `${layer_url}`
         });
   
-        console.log(`Querying attachments for Object ID: ${objectIdValue}`);
-  
         // Query features to get the additional field
         layer.queryFeatures({
           objectIds: [objectIdValue],
@@ -86,7 +84,6 @@ export default function Widget(props: AllWidgetProps<{}>) {
         }).then((featureSet) => {
           const feature = featureSet.features[0];
           const additionalFieldValue = feature.attributes[props.useDataSources[0].fields[0]];
-          console.log(feature);
   
           // Now query attachments
           layer.queryAttachments({
@@ -94,10 +91,11 @@ export default function Widget(props: AllWidgetProps<{}>) {
             objectIds: [objectIdValue]
           }).then((attachmentsByObjectId) => {
             const attachments = attachmentsByObjectId[objectIdValue];
-            const attachmentCount = attachments ? attachments.length : 0;
+            const attachmentUrls = attachments ? attachments.map(attachment => attachment.url) : []; // Extract attachment URLs
+            const attachmentCount = attachmentUrls.length;
   
-            // Store attachment count and additional field value in dictionary
-            attachmentsDictionary[objectIdValue] = { count: attachmentCount, additionalField: additionalFieldValue };
+            // Store attachment count, additional field value, and URLs in dictionary
+            attachmentsDictionary[objectIdValue] = { count: attachmentCount, additionalField: additionalFieldValue, urls: attachmentUrls };
             resolve();
           }).catch((error) => {
             console.error("Error querying attachments:", error);
@@ -114,11 +112,11 @@ export default function Widget(props: AllWidgetProps<{}>) {
       setGlobalAttachmentsDictionary(attachmentsDictionary);
       setLoading(false);
       setCompleted(true);
-      console.log(attachmentsDictionary)
     }).catch((error) => {
       console.error("Error processing attachments:", error);
     });
   };
+  
 
   const handleProcessData = async () => {
     const processedData = [];
@@ -247,15 +245,21 @@ export default function Widget(props: AllWidgetProps<{}>) {
 
   if (completed) {
     return (
-      <div className="maincontainer" style={{ overflowY: 'auto', maxHeight: '400px' }}>
-        {Object.entries(globalAttachmentsDictionary).map(([objectId, { count, additionalField }]) => (
-          <div key={objectId} style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: '10%', width: '100%', transition: '0.2s ease-in-out', ':hover': { boxShadow: '0 0 11px rgba(33, 33, 33, 0.2)' } }}>
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: '15%' }}>Point: {objectId}</div>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'left', width: '70%', margin: '0 20%' }}>
-              <div style={{ width: '50%', marginRight: '10px'}}>{additionalField}</div>
-              {Array.from({ length: count }, (_, i) => (
-                <input type="checkbox" key={i} id={`${objectId}-${i}`} style={{ margin: '0 5px' }} />
-              ))}
+      <div className="maincontainer">
+        {Object.entries(globalAttachmentsDictionary).map(([objectId, { count, additionalField, urls }]) => (
+          <div key={objectId} className="item-container">
+            <div className="point">Point: {objectId}</div>
+            <div className="additional-field">
+              <div className="additional-content">{additionalField}</div>
+              <div className="checkholder">
+                {urls.map((url, i) => (
+                  <label key={i} className="checkbox-container">
+                    <input type="checkbox" id={`${objectId}-${i}`} className="checkbox" />
+                    <div className="checkmark"></div>
+                    <img src={url} alt="Attachment" />
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         ))}
