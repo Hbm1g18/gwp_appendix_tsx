@@ -6,19 +6,19 @@ const { useState, useEffect, useRef } = React;
 
 export default function Widget(props: AllWidgetProps<{}>) {
   const [query, setQuery] = useState<FeatureLayerQueryParams>(null);
-  const [syncData, setSyncData] = useState(false); // State to track data sync
-  const [loading, setLoading] = useState(false); // State to track loading state
+  const [syncData, setSyncData] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [generatingCSV, setGeneratingCSV] = useState(false);
-  const [completed, setCompleted] = useState(false); // State to track completion state
+  const [completed, setCompleted] = useState(false);
   const [globalAttachmentsDictionary, setGlobalAttachmentsDictionary] = useState<{ [objectId: string]: number }>({}); // State to store the dictionary
 
   const cityNameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (syncData) {
-      queryFunc(); // Call queryFunc if syncData is true
+      queryFunc();
     }
-  }, [syncData]); // Run effect when syncData changes
+  }, [syncData]);
 
   const isDsConfigured = () => {
     if (props.useDataSources &&
@@ -45,7 +45,7 @@ export default function Widget(props: AllWidgetProps<{}>) {
   }
 
   const handleSyncData = () => {
-    setSyncData(true); // Set syncData to true when button is clicked
+    setSyncData(true);
   }
 
   const handleButtonClick = () => {
@@ -76,25 +76,22 @@ export default function Widget(props: AllWidgetProps<{}>) {
         const layer = new FeatureLayer({
           url: `${layer_url}`
         });
-  
-        // Query features to get the additional field
+
         layer.queryFeatures({
           objectIds: [objectIdValue],
-          outFields: [props.useDataSources[0].fields[0]] // Include additional field in outFields
+          outFields: [props.useDataSources[0].fields[0]]
         }).then((featureSet) => {
           const feature = featureSet.features[0];
           const additionalFieldValue = feature.attributes[props.useDataSources[0].fields[0]];
-  
-          // Now query attachments
+
           layer.queryAttachments({
             attachmentTypes: ["image/jpeg"],
             objectIds: [objectIdValue]
           }).then((attachmentsByObjectId) => {
             const attachments = attachmentsByObjectId[objectIdValue];
-            const attachmentUrls = attachments ? attachments.map(attachment => attachment.url) : []; // Extract attachment URLs
+            const attachmentUrls = attachments ? attachments.map(attachment => attachment.url) : [];
             const attachmentCount = attachmentUrls.length;
-  
-            // Store attachment count, additional field value, and URLs in dictionary
+
             attachmentsDictionary[objectIdValue] = { count: attachmentCount, additionalField: additionalFieldValue, urls: attachmentUrls };
             resolve();
           }).catch((error) => {
@@ -132,7 +129,7 @@ export default function Widget(props: AllWidgetProps<{}>) {
       }
   
       if (checkedBoxes.length === 0) {
-        continue; // If no attachments are selected, skip to the next object ID
+        continue;
       }
   
       const attachmentsUrls = [];
@@ -161,7 +158,6 @@ export default function Widget(props: AllWidgetProps<{}>) {
         });
   
         try {
-          // Query attachments
           const attachmentsByObjectId = await layer.queryAttachments({
             attachmentTypes: ["image/jpeg"],
             objectIds: [selectedObjectId]
@@ -170,15 +166,14 @@ export default function Widget(props: AllWidgetProps<{}>) {
           if (attachments && attachments[selectedIndex]) {
             attachmentsUrls.push(attachments[selectedIndex].url);
           }
-  
-          // Query all fields
+
           const queryResult = await layer.queryFeatures({
             objectIds: [selectedObjectId],
-            outFields: ["*"] // Query all fields
+            outFields: ["*"] 
           });
           if (queryResult.fields && queryResult.fields.length > 0) {
             queryResult.fields.forEach(field => {
-              fields[field.name] = recordData[field.name]; // Populate fields object dynamically
+              fields[field.name] = recordData[field.name];
             });
           }
         } catch (error) {
@@ -190,8 +185,8 @@ export default function Widget(props: AllWidgetProps<{}>) {
         processedData.push({
           objectId: objectId,
           urls: attachmentsUrls,
-          additionalField: additionalField, // Include the additional field in processed data
-          ...fields // Spread the fields object to include all attributes
+          additionalField: additionalField,
+          ...fields
         });
       }
     }
@@ -200,21 +195,17 @@ export default function Widget(props: AllWidgetProps<{}>) {
       console.log("No attachments selected.");
       return;
     }
-  
-    // Modify headers to include additional field
+
     const headers = ["ObjectID", "URLs", "AdditionalField", ...Object.keys(processedData[0]).filter(key => key !== "objectId" && key !== "urls" && key !== "additionalField")];
-  
-    // Combine headers and data into a single array
+
     const csvContent = "data:text/csv;charset=utf-8," 
       + [headers, ...processedData.map(row => Object.values(row))].map(row => row.join("\t")).join("\n");
   
-    // Create a download link for the CSV file
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", "processed_data.csv");
   
-    // Append the link to the body and trigger the download
     document.body.appendChild(link);
     link.click();
     setGeneratingCSV(false);
@@ -226,7 +217,7 @@ export default function Widget(props: AllWidgetProps<{}>) {
     if (completed) {
       console.log("Data processing is complete.");
     }
-  }, [completed]); // Run effect when completed changes
+  }, [completed]);
 
   if (!isDsConfigured()) {
     return (
@@ -247,27 +238,49 @@ export default function Widget(props: AllWidgetProps<{}>) {
     return (
       <div className="maincontainer">
         {Object.entries(globalAttachmentsDictionary).map(([objectId, { count, additionalField, urls }]) => (
-          <div key={objectId} className="item-container">
-            <div className="point">Point: {objectId}</div>
-            <div className="additional-field">
-              <div className="additional-content">{additionalField}</div>
-              <div className="checkholder">
-                {urls.map((url, i) => (
-                  <label key={i} className="checkbox-container">
-                    <input type="checkbox" id={`${objectId}-${i}`} className="checkbox" />
-                    <div className="checkmark"></div>
-                    <img src={url} alt="Attachment" />
-                  </label>
-                ))}
+          count !== 0 && (
+            <div key={objectId} className="item-container">
+              <div className="point">Point: {objectId}</div>
+              <div className="additional-field">
+                <div className="additional-content">{additionalField}</div>
+                <div className="checkholder">
+                  {urls.map((url, i) => (
+                    <label key={i} className="checkbox-container">
+                      <input type="checkbox" id={`${objectId}-${i}`} className="checkbox" />
+                      <div className="checkmark"></div>
+                      <img src={url} alt="Attachment" />
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )
         ))}
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px', marginBottom: '10px' }}>
           {generatingCSV ? (
             <p>Processing...</p>
           ) : (
-            <button onClick={handleProcessData} style={{ backgroundColor: 'green', color: 'white' }}>Generate CSV</button>
+            <button onClick={handleProcessData} 
+              style={{ 
+                margin: 'auto', 
+                width: '50%', 
+                height: '30%', 
+                backgroundColor: 'green', 
+                color: 'white', 
+                fontSize: '2.5vh', 
+                fontWeight: 'bold', 
+                borderRadius: '5px', 
+                transition: '0.2s ease-in-out'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = 'darkgreen';
+                e.target.style.transform = 'scale(1.05)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = 'green';
+                e.target.style.transform = 'scale(1)';
+              }}
+            >Generate CSV</button>
           )}
         </div>
       </div>
@@ -292,15 +305,15 @@ export default function Widget(props: AllWidgetProps<{}>) {
             fontSize: '2.5vh', 
             fontWeight: 'bold', 
             borderRadius: '10px', 
-            transition: '0.2s ease-in-out' // Add transition for smoother effect
+            transition: '0.2s ease-in-out'
           }}
           onMouseOver={(e) => {
-            e.target.style.backgroundColor = 'darkgreen'; // Change background color on hover
-            e.target.style.transform = 'scale(1.05)'; // Scale up on hover
+            e.target.style.backgroundColor = 'darkgreen';
+            e.target.style.transform = 'scale(1.05)';
           }}
           onMouseOut={(e) => {
-            e.target.style.backgroundColor = 'green'; // Restore background color when not hovered
-            e.target.style.transform = 'scale(1)'; // Reset scale when not hovered
+            e.target.style.backgroundColor = 'green';
+            e.target.style.transform = 'scale(1)';
           }}
         >
           Select Attachments
