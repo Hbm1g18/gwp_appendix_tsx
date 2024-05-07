@@ -113,6 +113,21 @@ export default function Widget(props: AllWidgetProps<{}>) {
       console.error("Error processing attachments:", error);
     });
   };
+
+  const handleSelectAll = () => {
+    selectAllCheckboxes(true);
+  };
+
+  const handleClearSelection = () => {
+    selectAllCheckboxes(false);
+  };
+
+  const selectAllCheckboxes = (isSelected) => {
+    const checkboxes = document.querySelectorAll('.checkbox');
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = isSelected;
+    });
+  };
   
 
   const handleProcessData = async () => {
@@ -193,6 +208,7 @@ export default function Widget(props: AllWidgetProps<{}>) {
   
     if (processedData.length === 0) {
       console.log("No attachments selected.");
+      setGeneratingCSV(false);
       return;
     }
 
@@ -234,9 +250,55 @@ export default function Widget(props: AllWidgetProps<{}>) {
     );
   }
 
+  
+
   if (completed) {
     return (
       <div className="maincontainer">
+        <div className="button-container">
+          <button onClick={handleSelectAll}
+            style={{ 
+              margin: 'auto', 
+              width: '30%', 
+              height: '100%', 
+              backgroundColor: '#107eeb', 
+              color: 'white', 
+              fontSize: '2.5vh', 
+              fontWeight: 'bold', 
+              borderRadius: '5px', 
+              transition: '0.2s ease-in-out'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#0a5cad';
+              e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#107eeb';
+              e.target.style.transform = 'scale(1)';
+            }}
+          >Select All</button>
+          <button onClick={handleClearSelection} 
+            style={{ 
+              margin: 'auto', 
+              width: '30%', 
+              height: '100%', 
+              backgroundColor: '#cc0202', 
+              color: 'white', 
+              fontSize: '2.5vh', 
+              fontWeight: 'bold', 
+              borderRadius: '5px', 
+              transition: '0.2s ease-in-out'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#7d0000';
+              e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#cc0202';
+              e.target.style.transform = 'scale(1)';
+            }}
+          >Clear</button>
+        </div>
         {Object.entries(globalAttachmentsDictionary).map(([objectId, { count, additionalField, urls }]) => (
           count !== 0 && (
             <div key={objectId} className="item-container">
