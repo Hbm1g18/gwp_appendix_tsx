@@ -378,7 +378,7 @@ export default function Widget(props: AllWidgetProps<{}>) {
             e.target.style.transform = 'scale(1)';
           }}
         >
-          Testing action
+          Select Attachments
         </button>
       )}
     </div>
