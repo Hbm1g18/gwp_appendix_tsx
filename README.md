@@ -1,4 +1,4 @@
-# This branch produces a CSV file for use in the tex generating flask app. testing
+# This branch produces a CSV file for use in the tex generating flask app.
 
 # Creating an appendix from a feature layer
 
